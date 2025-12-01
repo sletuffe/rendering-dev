@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE Map>
+<Map bgcolor="transparent" srs="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over">
+	
+<!-- le contour de france -->
+<Style name="admin">
+	<Rule>
+	<LineSymbolizer>
+		<CssParameter name="stroke">#000000</CssParameter>
+		<CssParameter name="stroke-width">1</CssParameter>
+		<CssParameter name="stroke-opacity">1</CssParameter>
+	</LineSymbolizer>
+	</Rule>
+</Style>
+
+<!--rien encore, a vous de deviner -->
+<Style name="river_text">
+    <Rule>
+      <TextSymbolizer name="name" face_name="DejaVu Sans Book" size="10" fill="#6699cc" halo_radius="1" dy="10" placement="line"/>
+    </Rule>
+</Style>
+
+<!-- les etendues d'eau -->
+<Style name="water_areas">
+    <Rule>
+      <Filter>[waterway] = 'dock' or [landuse] = 'reservoir' or [landuse] = 'water' or [waterway] = 'mill_pond' or [natural] = 'lake' or [natural] = 'water'</Filter>
+      <PolygonSymbolizer>
+        <CssParameter name="fill">#1693f3</CssParameter>
+     </PolygonSymbolizer>
+     <!-- Histoire de sur-exagerer les etendues d'eau d'un pixel-->
+       <LineSymbolizer>
+        <CssParameter name="stroke">#1693f3</CssParameter>
+        <CssParameter name="stroke-width">1</CssParameter>
+        <CssParameter name="stroke-linejoin">round</CssParameter>
+        <CssParameter name="stroke-linecap">round</CssParameter>
+      </LineSymbolizer>     
+    </Rule>
+</Style>
+
+<!-- les rivieres -->
+ <Style name="water_lines">
+    <Rule>
+	    <Filter> [longueur] &gt; 300000</Filter>
+      <LineSymbolizer>
+        <CssParameter name="stroke">#1693f3</CssParameter>
+        <CssParameter name="stroke-width">2</CssParameter>
+        <CssParameter name="stroke-linejoin">round</CssParameter>
+        <CssParameter name="stroke-linecap">round</CssParameter>
+      </LineSymbolizer>
+      <!--
+      <TextSymbolizer name="route_name" face_name="DejaVu Sans Book" size="9" fill="#b5d0d0" halo_radius="1" min_distance="30" placement="line"/>
+      -->
+    </Rule>
+    <Rule>
+	    <Filter> [longueur] &gt; 100000 and [longueur] &lt; 300000</Filter>
+      <LineSymbolizer>
+        <CssParameter name="stroke">#1693f3</CssParameter>
+        <CssParameter name="stroke-width">1</CssParameter>
+        <CssParameter name="stroke-linejoin">round</CssParameter>
+        <CssParameter name="stroke-linecap">round</CssParameter>
+      </LineSymbolizer>
+      <!--
+      <TextSymbolizer name="route_name" face_name="DejaVu Sans Book" size="9" fill="#b5d0d0" halo_radius="1" min_distance="30" placement="line"/>
+      -->
+    </Rule>
+  </Style>
+<!-- (select p.way as way,p.natural,p.landuse from planet_osm_polygon as p,france_polygon where france_polygon.osm_id=4 and 
+     france_polygon.way &amp;&amp; p.way and p.way_area>10000000 and 
+(p.waterway IS NOT NULL or p.landuse='reservoir' or p.landuse='water' or  p."natural"='lake' or p."natural"='water' or p."natural"='land') 
+order by p.z_order) as water_areas</Parameter>
+-->
+    <Layer name="water_areas" status="on" srs="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over">
+    <StyleName>water_areas</StyleName>
+    <Datasource>
+      <Parameter name="type">postgis</Parameter>
+      <Parameter name="user">mapnik</Parameter>
+      <Parameter name="password">ootaephi</Parameter>
+      <Parameter name="dbname">gis</Parameter>
+      <Parameter name="estimate_extent">false</Parameter>
+      <Parameter name="table">
+(select * from planet_osm_polygon where way_area>10000000 and (waterway IS NOT NULL or landuse='reservoir' or landuse='water' or  "natural"='lake' or "natural"='water' or "natural"='land') order by z_order) as water_areas
+      </Parameter>
+      <Parameter name="extent">-20037508,-19929239,20037508,19929239</Parameter>
+    </Datasource>
+  </Layer>
+  <Layer name="water_lines" status="on" srs="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over">
+    <StyleName>water_lines</StyleName>
+    <Datasource>
+      <Parameter name="type">postgis</Parameter>
+      <Parameter name="user">mapnik</Parameter>
+      <Parameter name="password">ootaephi</Parameter>
+      <Parameter name="dbname">gis</Parameter>
+      <Parameter name="estimate_extent">false</Parameter>
+      <Parameter name="table">
+      (select st_collect(way) as way,st_length(st_collect(way)) as longueur 
+      from planet_osm_line where waterway IS NOT NULL and (waterway='river'
+      or waterway='canal') and st_length(way)>10000 group by osm_id) 
+      as water_lines
+      </Parameter>
+      <Parameter name="extent">-20037508,-19929239,20037508,19929239</Parameter>
+    </Datasource>
+  </Layer>
+     <Layer name="planet roads text osm" status="on" srs="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over">
+     <StyleName>river_text</StyleName>
+     <Datasource>
+      <Parameter name="type">postgis</Parameter>
+      <Parameter name="user">mapnik</Parameter>
+      <Parameter name="password">ootaephi</Parameter>
+      <Parameter name="dbname">gis</Parameter>
+      <Parameter name="table">
+      (select way,name from planet_osm_line where waterway IS NOT NULL and
+      (waterway='river' or waterway='canal') and st_length(way)>100000) as
+      river_text
+      </Parameter>
+      <Parameter name="estimate_extent">false</Parameter>
+      <Parameter name="extent">-20037508,-19929239,20037508,19929239</Parameter>
+    </Datasource>
+  </Layer>
+<!-- special frontieres de france -->
+  <Layer name="admin" status="on" srs="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over">
+    <StyleName>admin</StyleName>
+    <Datasource>
+      <Parameter name="type">postgis</Parameter>
+      <Parameter name="user">mapnik</Parameter>
+      <Parameter name="password">ootaephi</Parameter>
+      <Parameter name="dbname">gis</Parameter>
+      <Parameter name="table">
+      (select way,admin_level,name,ref from france_polygon where osm_id=4 ) as admin</Parameter>
+      <Parameter name="estimate_extent">false</Parameter>
+      <Parameter name="extent">-20037508,-19929239,20037508,19929239</Parameter>
+    </Datasource>
+  </Layer>
+</Map>

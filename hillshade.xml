@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE Map 
+[
+    <!ENTITY fontset-settings SYSTEM "inc/fontset-settings.xml">
+    <!ENTITY water-polygons SYSTEM "inc/water-areas.xml">
+    <!ENTITY % zoom-levels SYSTEM "inc/zoom-levels.xml">
+    %zoom-levels;
+
+]>
+<Map srs="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over" background-color="white">
+&fontset-settings;
+
+<!-- Hillshaded maps, from zoom 10 to 17 merged with colored one, for zoom 10 and more, hillshades only -->
+<Style name="hillshade">
+        <Rule>
+                &maxscale_zoom1;
+                &minscale_zoom17;
+                <RasterSymbolizer opacity="0.7" scaling="bilinear" />
+        </Rule>
+</Style>
+<Layer name="hillshade">
+        <StyleName>hillshade</StyleName>
+        <Datasource>
+                <Parameter name="type">gdal</Parameter>
+                <Parameter name="file">mapnik-data/hillshade/test/test.tif</Parameter>
+                <Parameter name="format">tiff</Parameter>
+        </Datasource>
+</Layer>
+
+</Map>

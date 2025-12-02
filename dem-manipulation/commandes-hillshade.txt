@@ -1,0 +1,13 @@
+# Take only a small part of the world for the tests
+gdalwarp -co TILED=yes -te_srs EPSG:4326    -te 6.0 45.0 7.0 46.0 -t_srs EPSG:3857 -r cubicspline dem_03-00_4326_ZSTD_3_CP.tif hillshade/savoie-dem.tif
+
+# hillshade with 1.8 exageration of elevation and jpeg compression
+gdaldem hillshade -co TILED=yes -co COMPRESS=jpeg hillshade/savoie-dem.tif hillshade/savoie-dem-hillshade.tif  -z 1.8
+
+# Removing the no data value (for qgis good display, and maybe mapnik's gdal driver ?)
+gdal_edit.py hillshade/savoie-dem-hillshade.tif -unsetnodata
+
+# Create overviews
+gdaladdo -r average hillshade/savoie-dem-hillshade.tif
+
+

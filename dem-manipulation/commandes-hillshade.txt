@@ -1,13 +1,16 @@
 # Take only a small part of the world for the tests
-gdalwarp -co TILED=yes -te_srs EPSG:4326    -te 6.0 45.0 7.0 46.0 -t_srs EPSG:3857 -r cubicspline dem_03-00_4326_ZSTD_3_CP.tif hillshade/savoie-dem.tif
+# Use -tr 30 30 for more accurate but 4 times bigger (800GB !) geotiff file
+gdalwarp -tr 60 60 --config GDAL_NUM_THREADS ALL_CPUS --config GDAL_CACHEMAX 4000 -co NUM_THREADS=ALL_CPUS -co BIGTIFF=yes -co COMPRESS=ZSTD -co PREDICTOR=3 --co TILED=yes -te_srs EPSG:4326 -te 6.0 45.0 7.0 46.0 -t_srs EPSG:3857 -r cubic $input $output
+or the whole world :
+gdalwarp -tr 60 60 --config GDAL_NUM_THREADS ALL_CPUS --config GDAL_CACHEMAX 4000 -co NUM_THREADS=ALL_CPUS -co BIGTIFF=yes -co COMPRESS=ZSTD -co PREDICTOR=3 --co TILED=yes -t_srs EPSG:3857 -r cubic $input $output
 
-# hillshade with 1.8 exageration of elevation and jpeg compression
-gdaldem hillshade -co TILED=yes -co COMPRESS=jpeg hillshade/savoie-dem.tif hillshade/savoie-dem-hillshade.tif  -z 1.8
+# Removing the no data value (for qgis good display, and hillshading creation)
+gdal_edit.py $output-hillshade -unsetnodata
 
-# Removing the no data value (for qgis good display, and maybe mapnik's gdal driver ?)
-gdal_edit.py hillshade/savoie-dem-hillshade.tif -unsetnodata
+# hillshade with 1.x exageration of elevation and jpeg compression
+gdaldem hillshade -z 1.7 --config GDAL_NUM_THREADS ALL_CPUS --config GDAL_CACHEMAX 4000 -co NUM_THREADS=ALL_CPUS -co BIGTIFF=yes -co TILED=yes -co COMPRESS=jpeg $output $output-hillshade
 
 # Create overviews
-gdaladdo -r average hillshade/savoie-dem-hillshade.tif
+gdaladdo -r average $output-hillshade
 
 

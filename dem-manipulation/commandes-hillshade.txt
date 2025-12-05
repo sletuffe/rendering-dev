@@ -1,16 +1,26 @@
+
+# Common options
+input=input.tif
+output=output.tif
+
+common_options="-co BIGTIFF=yes --co TILED=yes"
+multi_cpu_options="--config GDAL_NUM_THREADS ALL_CPUS --config GDAL_CACHEMAX 4000 -co NUM_THREADS=ALL_CPUS"
+lossless_compression_options="-co COMPRESS=ZSTD -co PREDICTOR=3"
+
+
 # Take only a small part of the world for the tests
 # Use -tr 30 30 for more accurate but 4 times bigger (800GB !) geotiff file
-gdalwarp -tr 60 60 --config GDAL_NUM_THREADS ALL_CPUS --config GDAL_CACHEMAX 4000 -co NUM_THREADS=ALL_CPUS -co BIGTIFF=yes -co COMPRESS=ZSTD -co PREDICTOR=3 --co TILED=yes -te_srs EPSG:4326 -te 6.0 45.0 7.0 46.0 -t_srs EPSG:3857 -r cubic $input $output
+gdalwarp -tr 60 60 -te_srs EPSG:4326 -r cubic -te 6.0 45.0 7.0 46.0 -t_srs EPSG:3857 $common_options $multi_cpu_options $lossless_compression_options $input $output
 or the whole world :
-gdalwarp -tr 60 60 --config GDAL_NUM_THREADS ALL_CPUS --config GDAL_CACHEMAX 4000 -co NUM_THREADS=ALL_CPUS -co BIGTIFF=yes -co COMPRESS=ZSTD -co PREDICTOR=3 --co TILED=yes -t_srs EPSG:3857 -r cubic $input $output
+gdalwarp -r cubic -tr 60 60 $common_options $multi_cpu_options $lossless_compression_options $input $output
 
 # Removing the no data value (for qgis good display, and hillshading creation)
-gdal_edit.py $output-hillshade -unsetnodata
+gdal_edit.py $output -unsetnodata
 
 # hillshade with 1.x exageration of elevation and jpeg compression
-gdaldem hillshade -z 1.7 --config GDAL_NUM_THREADS ALL_CPUS --config GDAL_CACHEMAX 4000 -co NUM_THREADS=ALL_CPUS -co BIGTIFF=yes -co TILED=yes -co COMPRESS=jpeg $output $output-hillshade
+gdaldem hillshade -z 1.7 -co COMPRESS=jpeg $common_options $multi_cpu_options $output hillshade-$output
 
 # Create overviews
-gdaladdo -r average $output-hillshade
+gdaladdo -r average $multi_cpu_options hillshade-$output
 
 
